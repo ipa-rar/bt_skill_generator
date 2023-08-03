@@ -1,0 +1,92 @@
+#ifndef {{ CLASS_NAME | upper }}_NODE_HPP
+#define {{ CLASS_NAME | upper }}_NODE_HPP
+
+#include <rclcpp/rclcpp.hpp>
+#include <behaviortree_cpp_v3/action_node.h>
+
+class {{ CLASS_NAME }} : public BT::SyncActionNode
+{
+protected:
+  rclcpp::Node::SharedPtr node_;
+
+public:
+  {{ CLASS_NAME }}(const std::string& name, const BT::NodeConfiguration& config)
+    : BT::SyncActionNode(name, config)
+  {
+    node_ = config.blackboard->get<rclcpp::Node::SharedPtr>("node");
+    RCLCPP_INFO(node_->get_logger(), "Initializing {{ CLASS_NAME }} Node.");
+  }
+
+    // Define the providedPorts() method to specify the input and output ports.
+  static BT::PortsList providedPorts()
+  {
+    return { 
+      {% for port in ports %}
+      BT::{{ port.port_type }}Port<{{ port.data_type }}>(
+        "{{ port.name }}"{% if port.default_value %}, {{ port.default_value }}{% endif %},
+        "{{ port.description }}"
+      ),
+      {% endfor %}
+    };
+  }
+
+  BT::NodeStatus tick() override
+  {
+    // Access the input parameters based on their types.
+    {% for port in ports %}
+    {{ port.data_type }} {{ port.name }} = getInput<{{ port.data_type }}>("{{ port.name }}").value();
+    {% endfor %}
+
+    // Perform the specific skill's action here based on the input parameters.
+    // Modify this section to implement different functionalities for other skills.
+
+    // Example: Compute the output results.
+    {% for port in ports %}
+    {{ port.data_type }} {{ port.name }}_result = {{ port.default_value }};
+    {% endfor %}
+
+    // Set the output results.
+    {% for port in ports %}
+    setOutput("{{ port.name }}", {{ port.name }}_result);
+    {% endfor %}
+
+    // Return the appropriate status of the action node based on the execution.
+    // Modify this section based on the success criteria of the skill.
+    return BT::NodeStatus::SUCCESS;
+  }
+
+  BT::NodeStatus onStart() override
+  {
+    // Implement the onStart logic here.
+    // Modify this section based on the specific requirements of the skill.
+
+    // Example:
+    // RCLCPP_INFO(node_->get_logger(), "Starting {{ CLASS_NAME }}...");
+
+    return BT::NodeStatus::RUNNING;
+  }
+
+  BT::NodeStatus onRunning() override
+  {
+    // Implement the onRunning logic here.
+    // Modify this section based on the specific requirements of the skill.
+
+    // Example:
+    // RCLCPP_INFO(node_->get_logger(), "{{ CLASS_NAME }} is running...");
+
+    // Return the appropriate status of the action node based on the execution.
+    // Modify this section based on the success criteria of the skill.
+    return BT::NodeStatus::SUCCESS;
+  }
+
+  void onHalted() override
+  {
+    // Implement the onHalted logic here.
+    // Modify this section based on the specific requirements of the skill.
+
+    // Example:
+    // RCLCPP_INFO(node_->get_logger(), "{{ CLASS_NAME }} halted.");
+  }
+};
+
+#endif  // {{ CLASS_NAME | upper }}_NODE_HPP
